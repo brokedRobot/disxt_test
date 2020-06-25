@@ -1,0 +1,19 @@
+ {
+    "name": "app",
+    "description": "test",
+    "version": "1.0.0",
+	"license": "MIT",
+	"description": "disxt test.",
+    "main": "index.js",
+    "scripts": {
+		"start": "node index.js"
+	},
+	"dependencies": {
+		"express": ">= 1.0.0",
+		"mongoose": ">= 1.0.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": ""
+	}
+}

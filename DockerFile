@@ -1,7 +1,27 @@
-FROM alpine
-RUN apk update && apk upgrade
-RUN apk add nodejs
+FROM node:10
 
-WORKDIR /app
-ADD . /app
-ENTRYPOINT [ "node", "server.js" ]
+RUN mkdir -p /usr/src/app
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 8000
+
+CMD ["npm", "start"]
+
+
+
+
+
+#FROM alpine
+#RUN apk update && apk upgrade
+#RUN apk add nodejs
+
+#WORKDIR /app
+#ADD . /app
+#ENTRYPOINT [ "node", "server.js" ]
