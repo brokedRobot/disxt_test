@@ -1,69 +1,64 @@
-const mongoose = require('mongoose');
-const express = require('express');
-const app = express();
+const mongoose = require('mongoose'); const jwt = require('jsonwebtoken'); const express = require('express'); const app = express();
 
-const port = process.env.PORT || 8000;
-const db_link = "mongodb://localhost:27018/db";
-const db_link2 = "mongodb://localhost:27018/db";
-
-if (0) mongoose.connect(db_link, (err) => {
-	if (err){
-		console.error('error conn', err);
-		if (0) mongoose.connect(db_link2, (err) => {
-			if (err){
-				console.error('error conn2', err);
-			}
-			else console.log('conn success2');
-		});
-	}
-	else console.log('conn success');
-});
-
-const options = {
-    autoIndex: false, // Don't build indexes
-    reconnectTries: 30, // Retry up to 30 times
-    reconnectInterval: 500, // Reconnect every 500ms
-    poolSize: 10, // Maintain up to 10 socket connections
-    // If not connected, return errors immediately rather than waiting for reconnect
-    bufferMaxEntries: 0
-}
-
-const customerSchema = new mongoose.Schema({name: String, address: String, email:String});
-
-const Customer = mongoose.model('Customer', customerSchema);
-
-async function createNewCustomer() {
-	const customer = new Customer({
-		name: 'new customer', 
-		address: 'new address',
-		email: 'customer1@new.com'
-	});
-	const result = await customer.save(); console.log(result);
-}
-
-const connectWithRetry = () => {
-//async function connectWithRetry() {
-	console.log('MongoDB connection with retry')
-	mongoose.connect("mongodb://mongo:27017/test", options).then(async function(){
-		console.log('MongoDB is connected')
+const disxt_test = {
+	settings: {
+		port: process.env.PORT || 8000,
+		mongo: {autoIndex: false, reconnectTries: 30, reconnectInterval: 500, poolSize: 10, bufferMaxEntries: 0},
+	},
+	user: mongoose.model('user', new mongoose.Schema(
+		{username: String, password: String, name: String, lastname: String, age: String, role: String}
+	)),
+	product: mongoose.model('product', new mongoose.Schema({name: String, price: String, description: String})),
+	newUser: async function(opts){
+		if (!opts) return console.error('disxt_test.newUser', 'newUser requires at least one argument: username');
+		const user = new disxt_test.user(typeof opts === 'string' ? {username: opts} : opts);
+		const result = await user.save(); console.log(result); return result;
+	},
+	newProduct: async function(opts){
+		if (!opts) return console.error('disxt_test.newProduct', 'newProduct requires at least one argument: name');
+		const product = new disxt_test.product(typeof opts === 'string' ? {name: opts} : opts);
+		const result = await product.save(); console.log(result); return result;
+	},
+	editProduct: function(){
+	
+	},
+	deleteProduct: function(){
+	
+	},
+	start: function(){
+		mongoose.connect("mongodb://mongo:27017/disxt_test", options).then(async function(){
 		
-		if (0) createNewCustomer();
+			console.log('MongoDB connected...')
+			
+			app.get('/homepage', (req, res) => {
+				res.send("hi world wlcom");
+			});
+				
+			app.listen(port, () => console.log("app run succses port "+port));
+			
+		}).catch(err=>{
+			console.log('MongoDB connection attempt failed...'); setTimeout(disxt_test.start, 5000);
+		})
+	}
+};
+
+disxt_test.start();
+
+/*(function(){
+	mongoose.connect("mongodb://mongo:27017/disxt_test", options).then(async function(){
+		console.log('MongoDB connected...')
 		else {
 			const doc = await Customer.findOne();
-			console.log('doc', doc);
+			
 		}
-
-		
 	}).catch(err=>{
 		console.log('MongoDB connection unsuccessful, retry after 5 seconds.')
 		setTimeout(connectWithRetry, 5000)
 	})
-}
-
-connectWithRetry()
+})();
 
 app.get('/homepage', (req, res) => {
 	res.send("hi world wlcom");
 });
 	
-app.listen(port, () => console.log("app run succses port "+port));
+app.listen(port, () => console.log("app run succses port "+port));*/

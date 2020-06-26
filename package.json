@@ -10,7 +10,8 @@
 	},
 	"dependencies": {
 		"express": ">= 1.0.0",
-		"mongoose": ">= 1.0.0"
+		"mongoose": ">= 1.0.0",
+		"jsonwebtoken": ">= 1.0.0"
 	},
 	"repository": {
 		"type": "git",
