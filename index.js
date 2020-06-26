@@ -1,4 +1,7 @@
-const mongoose = require('mongoose'); const jwt = require('jsonwebtoken'); const express = require('express'); const app = express();
+const mongoose = require('mongoose'); const jwt = require('jsonwebtoken');
+const express = require('express'); var bodyParser = require('body-parser');
+
+const app = express(); app.use(bodyParser.json());
 
 const disxt_test = {
 	settings: {
@@ -40,13 +43,25 @@ const disxt_test = {
 			
 			app.get('/', (req, res) => {
 				require('fs').readFile('index.html', (err, data) => {
-					console.log('sending...', data.toString());
+					//console.log('sending...', data.toString());
 					res.send(data.toString());
 				});
 			});
 			
 			app.post('/login', (req, res) => {
-				return console.log('login..', req, res);
+			
+				return console.log('login....', req.body);
+			
+				var bodyStr = '';
+				req.on("data",function(chunk){console.log('chunk?', chunk.toString());
+					bodyStr += chunk.toString();
+				});
+				req.on("end",function(){
+					//res.send(bodyStr);
+					console.log('req edn');
+					console.dir(bodyStr.toString());
+				});
+				return;// console.log('login..', req.body);
 				jwt.sign({foo: 'bar'}, dt.settings.secret, {algorithm: 'RS256'}, function(err, token) {
 					console.log('token', err, token);
 				});

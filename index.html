@@ -3,6 +3,18 @@
 	<head>
 		<meta charset="utf-8">
 		<title>disxt test</title>
+		<script>
+			if (1){
+				fetch('login', {
+					method: 'POST', body: JSON.stringify({username: 'user1', password: 'test1'}),
+					headers: new Headers({'Content-Type': 'application/json'})
+				}).then(function(data){
+					console.log('got data', data);
+				}).catch(function(err){
+					console.log('got err', err);
+				});
+			}
+		</script>
 	</head>
 	<body>
 		hello again!  html version <div style="width: 100px; height: 100px; background: green;"></div>
