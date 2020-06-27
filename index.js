@@ -5,7 +5,7 @@ const app = express(); app.use(bodyParser.json());
 
 const disxt_test = {
 	settings: {
-		secret: 'disxt_secret', port: process.env.PORT || 8000, mongo_port: 27017,
+		admin: {username: 'admin', password: 'password'}, secret: 'disxt_secret', port: process.env.PORT || 8000, mongo_port: 27017,
 		mongo: {autoIndex: false, poolSize: 10, bufferMaxEntries: 0, useUnifiedTopology: true, useNewUrlParser: true},
 	},
 	login: function(req, res){
@@ -20,20 +20,20 @@ const disxt_test = {
 		{username: String, password: String, name: String, lastname: String, age: String, role: String}
 	)),
 	product: mongoose.model('product', new mongoose.Schema({name: String, price: String, description: String})),
-	newUser: async function(opts){
+	createUser: async function(opts){
 		if (!opts) return console.error('disxt_test.newUser', 'newUser requires at least one argument: username');
 		const user = new dt.user(typeof opts === 'string' ? {username: opts} : opts);
-		const result = await user.save(); console.log(result); return result;
+		const result = await user.save(); console.log('new user', result); return result;
 	},
-	newProduct: async function(opts){
+	createProduct: async function(opts){
 		if (!opts) return console.error('disxt_test.newProduct', 'newProduct requires at least one argument: name');
 		const product = new dt.product(typeof opts === 'string' ? {name: opts} : opts);
-		const result = await product.save(); console.log(result); return result;
+		const result = await product.save(); console.log('new product', result); return result;
 	},
 	editProduct: function(){
 		
 	},
-	deleteProduct: function(){
+	removeProduct: function(){
 		
 	},
 	start: function(){
@@ -41,30 +41,32 @@ const disxt_test = {
 		
 			console.log('MongoDB connected...');
 			
+			//check for admin and create if nonexistent
+			var admin = await dt.user.findOne(u => { return u && u.username === dt.admin.username && u.password === dt.admin.password });
+			//if (admin) admin = admin.hasNext() ? admin.next() : false;
+			console.log('admin?', admin);
+			if (!admin) admin = await dt.createUser(dt.settings.admin);
+			console.log('admin??', admin);
+			
 			app.get('/', (req, res) => {
 				require('fs').readFile('index.html', (err, data) => {
-					//console.log('sending...', data.toString());
 					res.send(data.toString());
 				});
 			});
 			
 			app.post('/login', (req, res) => {
-			
-				return console.log('login....', req.body);
-			
-				var bodyStr = '';
-				req.on("data",function(chunk){console.log('chunk?', chunk.toString());
-					bodyStr += chunk.toString();
-				});
-				req.on("end",function(){
-					//res.send(bodyStr);
-					console.log('req edn');
-					console.dir(bodyStr.toString());
-				});
-				return;// console.log('login..', req.body);
-				jwt.sign({foo: 'bar'}, dt.settings.secret, {algorithm: 'RS256'}, function(err, token) {
-					console.log('token', err, token);
-				});
+
+				const user = dt.user.find(u => {return u && u.username === req.body.username && u.password === req.body.password});
+
+				if (user) {
+					
+					const token = jwt.sign({username: user.username, role: user.role}, dt.settings.secret);
+					res.json(token);
+				
+				} else {
+					res.send('Username or password incorrect');
+				}
+				
 			});
 			
 			app.post('/logout', (req, res) => {
@@ -72,6 +74,38 @@ const disxt_test = {
 				jwt.sign({foo: 'bar'}, dt.settings.secret, {algorithm: 'RS256'}, function(err, token) {
 					console.log('token', err, token);
 				});
+			});
+			
+			app.post('/product', (req, res) => {
+
+				if (req.body.token){
+					jwt.verify
+				}
+				else {
+					res.send('no authorization');
+				}
+				
+				if (token){
+					jwt.verify(token, dt.settings.secret, (err, decoded) => {
+					  if (err){
+						return res.json({
+						  success: false,
+						  message: 'Token is not valid'
+						});
+					  }
+					  else {
+						req.decoded = decoded;
+						next();
+					  }
+					});
+				}
+				else {
+					return res.json({
+					  success: false,
+					  message: 'Auth token is not supplied'
+					});
+				}
+				
 			});
 				
 			app.listen(dt.settings.port, () => console.log('Application listening on...'+dt.settings.port));

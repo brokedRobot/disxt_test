@@ -4,19 +4,85 @@
 		<meta charset="utf-8">
 		<title>disxt test</title>
 		<script>
-			if (1){
-				fetch('login', {
-					method: 'POST', body: JSON.stringify({username: 'user1', password: 'test1'}),
-					headers: new Headers({'Content-Type': 'application/json'})
-				}).then(function(data){
-					console.log('got data', data);
-				}).catch(function(err){
-					console.log('got err', err);
-				});
+			var dt = {
+				debug: true,
+				user: false,
+				token: false,
+				fetch_opts: function(body){
+					return {method: 'POST', body: JSON.stringify(body), headers: new Headers({'Content-Type': 'application/json'})};
+				},
+				fetch_error: function(err){
+					if (dt.debug) console.error('fetch error', err);
+				},
+				login: function(user, queued){ //todo: queued?
+					fetch('login', dt.fetch_opts(user)).then(function(data){
+						data.json().then(function(token){
+							dt.token = token;
+							dt.products();
+						}).catch(dt.fetch_error);
+					}).catch(dt.fetch_error);
+				},
+				logout: function(username, password){
+					fetch('logout', dt.fetch_opts(token)).then(function(data){
+						console.log('got data', data);
+					}).catch(function(err){
+						console.error('login error', err);
+					});
+				},
+				products: function(){
+					fetch('products', dt.fetch_opts(token)).then(function(data){
+						data.json().then(function(data){
+							console.log('product list?', data);
+						}).catch(dt.fetch_error);
+					}).catch(function(err){
+						console.error('login error', err);
+					});
+				},
+				product: {
+					create: function(product){
+						fetch('product.create', dt.fetch_opts{(product: product, token: dt.token)).then(function(data){
+							data.json().then(function(data){
+								console.log('product.create.final', data);
+							}).catch(dt.fetch_error);
+						}).catch(dt.fetch_error);
+					},
+					edit: function(){
+						fetch('product.edit', dt.fetch_opts(product)).then(function(data){
+							data.json().then(function(data){
+								console.log('product.create.final', data);
+							}).catch(dt.fetch_error);
+						}).catch(dt.fetch_error);
+					},
+					remove: function(){
+						fetch('product.remove', dt.fetch_opts(product)).then(function(data){
+							data.json().then(function(data){
+								console.log('product.create.final', data);
+							}).catch(dt.fetch_error);
+						}).catch(dt.fetch_error);
+					}
+				}
+			};
+			if (window.sessionStorage.token){
+				
+			}
+			else {
+				
 			}
 		</script>
 	</head>
 	<body>
-		hello again!  html version <div style="width: 100px; height: 100px; background: green;"></div>
+		<div id="authentication">
+			<span id="login-form">
+				user: <input id="username"></input> pass: <input id="password" type="password"></input>
+				&nbsp;<a id="login" style="color: green; cursor: pointer;" onclick="dt.login();">login</a>
+			</span>
+			<a id="logout" style="display: none; color: green; cursor: pointer;" onclick="dt.logout();">logout</a>
+		</div>
+		<br>
+		<div id="product-list" style="display: none;">
+			<div>product list</div>
+			<div id="">product list</div>
+			<div id="list"></div>
+		</div>
 	</body>
 </html>
