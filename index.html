@@ -7,67 +7,74 @@
 			var dt = {
 				token: false,
 				fetch_opts: function(body, type){
-					var headers = {'Content-Type': 1||type === 'json' ? 'application/json' : 'text/plain', Authorization: dt.token || undefined};
-					return {method: 'POST', body: JSON.stringify(body), headers: new Headers(headers)};
+					var headers = {'Content-Type': type === 'text' ? 'text/plain' : 'application/json', Authorization: dt.token || undefined};
+					return {method: 'POST', body: JSON.stringify(body || {}), headers: new Headers(headers)};
 				},
 				fetch_error: function(err){
 					console.error('fetch error', err);
 				},
 				login: function(user){
-					var username = window.document.getElementById('username').value;
+					dt.username = window.document.getElementById('username').value;
 					var password = window.document.getElementById('password').value;
-					fetch('login', dt.fetch_opts({username: username, password: password})).then(function(res){
+					fetch('login', dt.fetch_opts({username: dt.username, password: password})).then(function(res){
 						res.json().then(function(json){
 							if (json.success){
 								dt.token = window.sessionStorage.token = json.token;
 								dt.product.list();
+								//todo: edit UI to hide login and display logout...
 							}
 							else console.error('login error');
 						});
-						
 					}).catch(dt.fetch_error);
 				},
 				logout: function(username, password){
-					if (dt.token) fetch('logout', dt.fetch_opts()).then(function(res){
-							res.json().then(function(json){
-								if (json.success) console.log('logged out');
-								else console.error('not logged out');
-							});
+					if (dt.token){
+						dt.token = false; delete window.sessionStorage.token;
+						//todo: edit UI to hide logout and display login...
+					}
+				},
+				verify: function(){ //verify authorization for debugging
+					if (dt.token) fetch('verify', dt.fetch_opts()).then(function(res){
+							res.json().then(function(json){console.log('verify', json);}).catch(dt.fetch_error);
 						}).catch(dt.fetch_error);
-					else console.error('already logged out');
+					else console.log('not logged in');
 				},
 				product: {
 					list: function(){
-						fetch('product', dt.fetch_opts({list: true})).then(function(res){
-							res.json().then(dt.load).catch(dt.fetch_error);
-						}).catch(dt.fetch_error);
+						if (dt.token) fetch('product', dt.fetch_opts({list: true})).then(function(res){
+								res.json().then(dt.load).catch(dt.fetch_error);
+							}).catch(dt.fetch_error);
+						else console.log('not logged in');
 					},
 					create: function(product){
-						fetch('product', dt.fetch_opts({create: product})).then(function(res){
-							res.json().then(function(json){
-								if (json.success) console.log('created', json.product);
-								else console.error('failed creating product', product);
-								//todo: insert new product into product list HTML
+						if (dt.token) fetch('product', dt.fetch_opts({create: product})).then(function(res){
+								res.json().then(function(json){
+									if (json.success) console.log('created', json.product);
+									else console.error('failed creating product', product);
+									//todo: insert new product into product list HTML
+								}).catch(dt.fetch_error);
 							}).catch(dt.fetch_error);
-						}).catch(dt.fetch_error);
+						else console.log('not logged in');
 					},
 					edit: function(product){
-						fetch('product', dt.fetch_opts({edit: product})).then(function(res){
-							res.json().then(function(json){
-								if (json.success) console.log('edited', json.product);
-								else console.error('failed editing product', product);
-								//todo: edit product in product list HTML
+						if (dt.token) fetch('product', dt.fetch_opts({edit: product})).then(function(res){
+								res.json().then(function(json){
+									if (json.success) console.log('edited', json.product);
+									else console.error('failed editing product', product);
+									//todo: edit product in product list HTML
+								}).catch(dt.fetch_error);
 							}).catch(dt.fetch_error);
-						}).catch(dt.fetch_error);
+						else console.log('not logged in');
 					},
 					remove: function(product){
-						fetch('product', dt.fetch_opts({remove: product})).then(function(res){
-							res.json().then(function(json){
-								if (json.success) console.log('remove', json.product);
-								else console.error('failed removing product', product);
-								//todo: remove product from product list HTML
+						if (dt.token) fetch('product', dt.fetch_opts({remove: product})).then(function(res){
+								res.json().then(function(json){
+									if (json.success) console.log('remove', json.product);
+									else console.error('failed removing product', product);
+									//todo: remove product from product list HTML
+								}).catch(dt.fetch_error);
 							}).catch(dt.fetch_error);
-						}).catch(dt.fetch_error);
+						else console.log('not logged in');
 					}
 				},
 				load: function(products){
@@ -75,16 +82,17 @@
 					//todo: fill in a template for the UI using products array
 				}
 			};
-			if (window.sessionStorage.token) dt.token = window.sessionStorage.token;
+			//if (window.sessionStorage.token) dt.token = window.sessionStorage.token;
+			//if (dt.token) dt.login();
 		</script>
 	</head>
 	<body>
 		<div id="authorization">
 			<span id="login-form">
-				user: <input id="username" placeholder="admin"></input> pass: <input id="password" type="password" placeholder="password"></input>
+				user: <input id="username" value="admin"></input> pass: <input id="password" type="password" value="password"></input>
 				&nbsp;<a id="login" style="color: green; cursor: pointer;" onclick="dt.login();">login</a>
+				&nbsp;<a id="logout" style="color: red; cursor: pointer;" onclick="dt.logout();">logout</a>
 			</span>
-			<a id="logout" style="display: none; color: green; cursor: pointer;" onclick="dt.logout();">logout</a>
 		</div>
 		<br>
 		<div id="product-list-container" style="display: none;">
