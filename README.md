@@ -2,7 +2,7 @@
 
 to start, in directory execute 'docker-compose build; docker-compose up;'
 
-to operate, use sign-in form, then open development tools, and enter into console for example:
+to operate on http://127.0.0.1:8000/, use sign-in form, then open development tools, and enter into console for example:
 
 	dt.product.create({name: 'test', price: '$1.99', description: 'test1'});
 
