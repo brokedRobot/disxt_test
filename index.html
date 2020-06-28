@@ -49,8 +49,8 @@
 					create: function(product){
 						if (dt.token) fetch('product', dt.fetch_opts({create: product})).then(function(res){
 								res.json().then(function(json){
-									if (json.success) console.log('created', json.product);
-									else console.error('failed creating product', product);
+									if (!json.error) console.log('created', json.product);
+									else console.error('failed creating product,', json.error, json.product);
 									//todo: insert new product into product list HTML
 								}).catch(dt.fetch_error);
 							}).catch(dt.fetch_error);
@@ -59,8 +59,8 @@
 					edit: function(product){
 						if (dt.token) fetch('product', dt.fetch_opts({edit: product})).then(function(res){
 								res.json().then(function(json){
-									if (json.success) console.log('edited', json.product);
-									else console.error('failed editing product', product);
+									if (!json.error) console.log('edited', json.product);
+									else console.error('failed editing product,', json.error, json.product);
 									//todo: edit product in product list HTML
 								}).catch(dt.fetch_error);
 							}).catch(dt.fetch_error);
@@ -69,8 +69,8 @@
 					remove: function(product){
 						if (dt.token) fetch('product', dt.fetch_opts({remove: product})).then(function(res){
 								res.json().then(function(json){
-									if (json.success) console.log('remove', json.product);
-									else console.error('failed removing product', product);
+									if (!json.error) console.log('removed', json.product);
+									else console.error('failed removing product,', json.error, json.product);
 									//todo: remove product from product list HTML
 								}).catch(dt.fetch_error);
 							}).catch(dt.fetch_error);

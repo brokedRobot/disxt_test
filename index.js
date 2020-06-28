@@ -29,7 +29,7 @@ const disxt_test = {
 	},
 	product: {
 		filter: function(product, blacklist){ //filter item properties out for non-admin users
-			var _item = {}; blacklist = blacklist || ['__v']; //if (product._doc) product = product._doc;
+			var _item = {}; blacklist = blacklist || ['__v']; if (product._doc) product = product._doc;
 			for (var prop in product) if (!blacklist.includes(prop)) _item[prop] = product[prop];
 			return _item;
 		},
@@ -45,19 +45,21 @@ const disxt_test = {
 			var _product = new dt.db.product(product); _product.created_by = username;
 			var result = await _product.save();
 			console.log('create product', result);
-			return {success: true, product: dt.product.filter(result)};
+			return {product: dt.product.filter(result._doc)};
 		},
 		edit: async function(product){
 			var _product = await dt.db.product.findOne({_id: product._id});
-			for (var i in product) _product[i] = product[i];
+			var blacklist = ['created_by']; //todo: extend or move this blacklist to dt.settings?
+			//stop admins from changing certain fields...
+			for (var prop in product) if (!blacklist.includes(prop)) _product[prop] = product[prop];
 			var result = await _product.save();
-			console.log('edit product', result);
-			return {success: true, product: dt.product.filter(result)};
+			console.log('edit product', result, dt.product.filter(result));
+			return {product: dt.product.filter(result._doc)};
 		},
 		remove: async function(product){
 			var result = await dt.db.product.deleteOne({_id: product._id}); 
 			console.log('remove product', result); 
-			return {success: true, product: dt.product.filter(result)};
+			return {product: dt.product.filter(product)};
 		}
 	},
 	start: function(){
@@ -80,15 +82,17 @@ const disxt_test = {
 			});
 			
 			app.post('/login', (req, res) => {
-				dt.db.user.findOne(req.body) //todo: validation on incoming entities?
+				dt.db.user.findOne({username: req.body.username}) //todo: validation on incoming entities?
 					.then((user) => {
-						var token = jwt.sign({username: user.username, role: user.role}, dt.settings.secret);
-						res.json({token: token});
+						if (user.password === req.body.password){
+							res.json({token: jwt.sign({username: user.username, role: user.role}, dt.settings.secret)});
+						}
+						else res.json({error: 'incorrect password'});
 					})
 					.catch((err) => {res.json({error: 'user not found'});});
 			});
 			
-			app.post('/product', (req, res) => {
+			app.post('/product', (req, res) => { //executed by req.body of the form {list: true} or {edit: product}
 				if (req.headers.authorization){
 					jwt.verify(req.headers.authorization, dt.settings.secret, async function(err, decoded){
 						if (!err) {
@@ -109,7 +113,7 @@ const disxt_test = {
 				else return res.json({error: 'no token supplied'});
 			});
 			
-			app.post('/verify', (req, res) => {
+			app.post('/verify', (req, res) => { //for debugging jwt token
 				if (req.headers.authorization){
 					jwt.verify(req.headers.authorization, dt.settings.secret, async function(err, decoded){
 						if (!err) res.json({verify: decoded});
