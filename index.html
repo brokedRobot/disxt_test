@@ -27,7 +27,7 @@
 						});
 					}).catch(dt.fetch_error);
 				},
-				logout: function(username, password){
+				logout: function(){
 					if (dt.token){
 						dt.token = false; delete window.sessionStorage.token;
 						//todo: edit UI to hide logout and display login...
