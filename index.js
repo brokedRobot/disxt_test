@@ -39,7 +39,7 @@ const disxt_test = {
 			list.forEach(function(item){
 				output.push(dt.product.filter(item._doc, blacklist));
 			});
-			return {success: true, list: output};
+			return {list: output};
 		},
 		create: async function(product, username){
 			var _product = new dt.db.product(product); _product.created_by = username;
@@ -83,15 +83,15 @@ const disxt_test = {
 				dt.db.user.findOne(req.body) //todo: validation on incoming entities?
 					.then((user) => {
 						var token = jwt.sign({username: user.username, role: user.role}, dt.settings.secret);
-						res.json({success: true, token: token});
+						res.json({token: token});
 					})
-					.catch((err) => {res.json({success: false});});
+					.catch((err) => {res.json({error: 'user not found'});});
 			});
 			
 			app.post('/product', (req, res) => {
 				if (req.headers.authorization){
 					jwt.verify(req.headers.authorization, dt.settings.secret, async function(err, decoded){
-						if (!err) {console.log('decoded', decoded);
+						if (!err) {
 							if (decoded.role === 'admin'){
 								if (req.body.list) res.json(await dt.product.list(true));
 								else if (req.body.create) res.json(await dt.product.create(req.body.create, decoded.username));

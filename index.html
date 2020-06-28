@@ -18,12 +18,12 @@
 					var password = window.document.getElementById('password').value;
 					fetch('login', dt.fetch_opts({username: dt.username, password: password})).then(function(res){
 						res.json().then(function(json){
-							if (json.success){
+							if (!json.error){
 								dt.token = window.sessionStorage.token = json.token;
 								dt.product.list();
 								//todo: edit UI to hide login and display logout...
 							}
-							else console.error('login error');
+							else console.error(json.error);
 						});
 					}).catch(dt.fetch_error);
 				},
