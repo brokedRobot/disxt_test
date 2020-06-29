@@ -40,6 +40,14 @@
 					else console.log('not logged in');
 				},
 				product: {
+					fetch: function(by){
+						if (dt.token) fetch('product', dt.fetch_opts({fetch: by})).then(function(res){
+								res.json().then(function(data){
+									console.log(data);
+								}).catch(dt.fetch_error);
+							}).catch(dt.fetch_error);
+						else console.log('not logged in');
+					},
 					list: function(){
 						if (dt.token) fetch('product', dt.fetch_opts({list: true})).then(function(res){
 								res.json().then(dt.load).catch(dt.fetch_error);

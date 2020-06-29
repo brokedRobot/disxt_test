@@ -17,3 +17,5 @@ to operate on http://127.0.0.1:8000/, use sign-in form, then open development to
 	dt.verify(); //prints token information
 
 	dt.product.list(); //prints product list
+	
+	dt.product.fetch({name: 'test'}); //fetch item by object query

@@ -6,6 +6,10 @@ const app = express(); app.use(bodyParser.json());
 //todo: https for express?
 
 const disxt_test = {
+	filter: {
+		admin: {__v: 0},
+		user: {__v: 0, created_by: 0}
+	},
 	settings: {
 		admin: {username: 'admin', password: 'password', role: 'admin'}, 
 		secret: 'disxt_secret', port: process.env.PORT || 8000, mongo_port: 27017,
@@ -28,38 +32,43 @@ const disxt_test = {
 		}
 	},
 	product: {
-		filter: function(product, blacklist){ //filter item properties out for non-admin users
-			var _item = {}; blacklist = blacklist || ['__v']; if (product._doc) product = product._doc;
-			for (var prop in product) if (!blacklist.includes(prop)) _item[prop] = product[prop];
-			return _item;
+		fetch: async function(by, admin){
+			var product = await dt.db.product.findOne(by, admin ? dt.filter.admin : dt.filter.user);
+			if (product) return {product: product};
+			else return {error: 'not found'};
 		},
 		list: async function(admin){
-			var output = []; var blacklist = ['__v']; if (!admin) blacklist.push('created_by');
-			var list = await dt.db.product.find();
-			list.forEach(function(item){
-				output.push(dt.product.filter(item._doc, blacklist));
-			});
-			return {list: output};
+			var list = await dt.db.product.find({}, admin ? dt.filter.admin : dt.filter.user);
+			return {list: list};
 		},
 		create: async function(product, username){
-			var _product = new dt.db.product(product); _product.created_by = username;
-			var result = await _product.save();
-			console.log('create product', result);
-			return {product: dt.product.filter(result._doc)};
+			var newproduct = new dt.db.product(product); newproduct.created_by = username;
+			var result = await newproduct.save();
+			var output = Object.assign({}, result._doc);
+			for (var prop in dt.filter.admin) delete output[prop];
+			console.log('create product', output);
+			return {product: output}; 
 		},
 		edit: async function(product){
-			var _product = await dt.db.product.findOne({_id: product._id});
-			var blacklist = ['created_by']; //todo: extend or move this blacklist to dt.settings?
+			var newproduct = await dt.db.product.findOne({_id: product._id}, dt.filter.admin).catch(function(err){
+				console.error('most likely a bad product _id', err); //would be nice to have these errors returning to the console...
+			});
 			//stop admins from changing certain fields...
-			for (var prop in product) if (!blacklist.includes(prop)) _product[prop] = product[prop];
-			var result = await _product.save();
-			console.log('edit product', result, dt.product.filter(result));
-			return {product: dt.product.filter(result._doc)};
+			for (var prop in {created_by: true}) delete product[prop];
+			for (var prop in product) newproduct[prop] = product[prop];
+			var result = await newproduct.save();
+			console.log('edit product', result._doc);
+			return {product: result._doc};
 		},
 		remove: async function(product){
-			var result = await dt.db.product.deleteOne({_id: product._id}); 
-			console.log('remove product', result); 
-			return {product: dt.product.filter(product)};
+			var result = await dt.db.product.deleteOne({_id: product._id}).catch(function(err){
+				console.error('most likely a bad product _id', err); //would be nice to have these errors returning to the console...
+			});
+			if (result.deletedCount){
+				console.log('remove product', product); 
+				return {product: product};
+			}
+			else return {error: 'product not found'};
 		}
 	},
 	start: function(){
@@ -98,12 +107,14 @@ const disxt_test = {
 						if (!err) {
 							if (decoded.role === 'admin'){
 								if (req.body.list) res.json(await dt.product.list(true));
+								else if (req.body.fetch) res.json(await dt.product.fetch(req.body.fetch, true));
 								else if (req.body.create) res.json(await dt.product.create(req.body.create, decoded.username));
 								else if (req.body.edit) res.json(await dt.product.edit(req.body.edit));
 								else if (req.body.remove) res.json(await dt.product.remove(req.body.remove));
 							}
 							else {
 								if (req.body.list) res.json(await dt.product.list(false));
+								else if (req.body.fetch) res.json(await dt.product.fetch(req.body.fetch, false));
 								else return res.json({error: 'no admin authorization'});
 							}
 						}
