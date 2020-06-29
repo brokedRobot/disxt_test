@@ -105,16 +105,18 @@ const disxt_test = {
 				if (req.headers.authorization){
 					jwt.verify(req.headers.authorization, dt.settings.secret, async function(err, decoded){
 						if (!err) {
-							if (decoded.role === 'admin'){
-								if (req.body.list) res.json(await dt.product.list(true));
-								else if (req.body.fetch) res.json(await dt.product.fetch(req.body.fetch, true));
+							if (decoded.role === 'admin'){ 
+								//TODO: the next step I would take would here be to allow admin to
+								//		make multiple transactions instead of an else-if and create a function factory
+								if (req.body.fetch) res.json(await dt.product.fetch(req.body.fetch, true));
+								else if (req.body.list) res.json(await dt.product.list(true));
 								else if (req.body.create) res.json(await dt.product.create(req.body.create, decoded.username));
 								else if (req.body.edit) res.json(await dt.product.edit(req.body.edit));
 								else if (req.body.remove) res.json(await dt.product.remove(req.body.remove));
 							}
 							else {
-								if (req.body.list) res.json(await dt.product.list(false));
-								else if (req.body.fetch) res.json(await dt.product.fetch(req.body.fetch, false));
+								if (req.body.fetch) res.json(await dt.product.fetch(req.body.fetch, false));
+								else if (req.body.list) res.json(await dt.product.list(false));
 								else return res.json({error: 'no admin authorization'});
 							}
 						}
